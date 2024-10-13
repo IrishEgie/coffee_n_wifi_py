@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, redirect, render_template, url_for
 from flask_bootstrap import Bootstrap5
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
@@ -28,17 +28,17 @@ class CafeForm(FlaskForm):
     loc = StringField('Location URL (Google Maps)', validators=[DataRequired(), URL()])
     opening = StringField('Opening Time (e.g., 11AM)', validators=[DataRequired()])
     closing = StringField('Closing Time (e.g., 11PM)', validators=[DataRequired()])
-    cafe_rating = SelectField('Cafe Rating', choices=[('0', '0 ☕️'), ('1', '1 ☕️'), 
-                                                       ('2', '2 ☕️'), ('3', '3 ☕️'), 
-                                                       ('4', '4 ☕️'), ('5', '5 ☕️')],
+    cafe_rating = SelectField('Cafe Rating', choices=[('☕️', '1 ☕️'), 
+                                                       ('☕️☕️', '2 ☕️'), ('☕️☕️☕️', '3 ☕️'), 
+                                                       ('☕️☕️☕️☕️', '4 ☕️'), ('☕️☕️☕️☕️☕️', '5 ☕️')],
                                validators=[DataRequired()])
-    wifi_rating = SelectField('WiFi Rating', choices=[('0', '0 💪'), ('1', '1 💪'), 
-                                                       ('2', '2 💪'), ('3', '3 💪'), 
-                                                       ('4', '4 💪'), ('5', '5 💪')],
+    wifi_rating = SelectField('WiFi Rating', choices=[('💪', '1 💪'), 
+                                                       ('💪💪', '2 💪'), ('💪💪💪', '3 💪'), 
+                                                       ('💪💪💪💪', '4 💪'), ('💪💪💪💪💪', '5 💪')],
                                validators=[DataRequired()])
-    power_rating = SelectField('Power Outlet Rating', choices=[('0', '0 🔌'), ('1', '1 🔌'), 
-                                                                ('2', '2 🔌'), ('3', '3 🔌'), 
-                                                                ('4', '4 🔌'), ('5', '5 🔌')],
+    power_rating = SelectField('Power Outlet Rating', choices=[('🔌', '1 🔌'), 
+                                                                ('🔌🔌', '2 🔌'), ('🔌🔌🔌', '3 🔌'), 
+                                                                ('🔌🔌🔌🔌', '4 🔌'), ('🔌🔌🔌🔌🔌', '5 🔌')],
                                 validators=[DataRequired()])
     submit = SubmitField('Submit')
 
@@ -57,15 +57,36 @@ def home():
     return render_template("index.html")
 
 
-@app.route('/add')
+from flask import flash, redirect, url_for
+
+@app.route('/add', methods=['GET', 'POST'])
 def add_cafe():
     form = CafeForm()
     if form.validate_on_submit():
-        print("True")
-    # Exercise:
-    # Make the form write a new row into cafe-data.csv
-    # with   if form.validate_on_submit()
+        # Collect the form data
+        cafe_name = form.cafe.data
+        loc = form.loc.data
+        opening_time = form.opening.data
+        closing_time = form.closing.data
+        cafe_rating = form.cafe_rating.data
+        wifi_rating = form.wifi_rating.data
+        power_rating = form.power_rating.data
+
+        # Write the data to CSV
+        with open('cafe-data.csv', mode='a', encoding='utf-8') as csv_file:
+            csv_file.write(f"\n{cafe_name}, {loc}, {opening_time}, {closing_time}, {cafe_rating}, {wifi_rating}, {power_rating}")
+        
+        # Print success message to the console
+        print("Successfully added cafe:", cafe_name)
+
+        # Flash a success message to the user
+        flash(f'Successfully added cafe: {cafe_name}!', 'success')
+
+        return redirect(url_for('cafes'))  # Redirect to the cafes page after submission
+
     return render_template('add.html', form=form)
+
+
 
 
 @app.route('/cafes')
